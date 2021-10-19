@@ -3,7 +3,7 @@ import logging
 import random
 import re
 
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, filters
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.utils.executor import start_webhook
 from bot.config import (BOT_TOKEN, HEROKU_APP_NAME,
@@ -60,7 +60,7 @@ async def get_random_verse(message: types.Message):
     await message.answer(correct(rnum + rtext))
 
 
-@dp.message_handler()
+@dp.message_handler(ignore_mention=True)
 async def reply(message: types.Message):
     surah_ayah = re.split(', | |:|,', message.text)
     msg = ""
