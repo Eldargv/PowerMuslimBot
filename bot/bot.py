@@ -115,6 +115,7 @@ delay = 100.0
 
 async def my_func():
     # твоя логика с отправкой сообщений тут
+    print("I AM IN MESSAGE")
     num = random.randint(1, 114)
     rnum, rtext = random.choice(list(Quran[str(num)].items()))
     bot.send_message(-629664099, rnum + rtext)
@@ -122,6 +123,7 @@ async def my_func():
     loop.call_at(when_to_call, my_callback)
 
 def my_callback():
+    print("TRYING to CALL BACK")
     asyncio.ensure_future(my_func())
 
 def main():
