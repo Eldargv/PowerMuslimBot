@@ -112,6 +112,7 @@ async def on_shutdown(dp):
 
 def main():
     with open("Quran.json", encoding='utf-8') as file:
+        global Quran
         Quran = json.load(file)
 
     logging.basicConfig(level=logging.INFO)
