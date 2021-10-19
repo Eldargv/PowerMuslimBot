@@ -77,11 +77,11 @@ async def reply(message: types.Message):
         print("nums got", surah, ayah)
         if 0 < int(surah) < 115:
             verses = Quran[surah].items()
+            print("trying get ayah")
             for n, t in verses:
-                print("trying")
                 nums = list(map(int, re.split('[-:,]', n)))
                 if nums[1] <= int(ayah) <= nums[-1]:
-                    print("I find!")
+                    print("Find!")
                     msg = n + t
                     break
             if len(msg) == 0:
