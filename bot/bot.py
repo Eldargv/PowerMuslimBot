@@ -2,6 +2,8 @@ import json
 import logging
 import random
 import re
+import asyncio
+import datetime
 
 from aiogram import Bot, Dispatcher, types, filters
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
@@ -108,11 +110,26 @@ async def on_startup(dp):
 async def on_shutdown(dp):
     logging.warning('Bye! Shutting down webhook connection')
 
+loop = asyncio.get_event_loop()
+delay = 100.0
+
+async def my_func():
+    # твоя логика с отправкой сообщений тут
+    num = random.randint(1, 114)
+    rnum, rtext = random.choice(list(Quran[str(num)].items()))
+    bot.send_message(rnum + rtext)
+    when_to_call = loop.time() + delay  # delay -- промежуток времени в секундах.
+    loop.call_at(when_to_call, my_callback)
+
+def my_callback():
+    asyncio.ensure_future(my_func())
 
 def main():
     with open("Quran.json", encoding='utf-8') as file:
         global Quran
         Quran = json.load(file)
+
+    my_callback()
 
     logging.basicConfig(level=logging.INFO)
     start_webhook(
