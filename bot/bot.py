@@ -85,11 +85,13 @@ async def reply(message: types.Message):
         else:
             raise IncorrectSurah
     except NotDigit:
-        msg = "Not number"
+        msg = "Вы ввели не число"
     except IncorrectSurah:
-        msg = "Surah isn't correct"
+        msg = "Неверный номер суры"
     except IncorrectAyah:
-        msg = "Ayah isn't correct"
+        msg = "Неверный номер аята"
+    except InCorrectInput:
+        msg = "Неправильный формат. Вы можете ввести номер суры и аята через пробел, запятую и двоеточие"
     except Exception as ex:
         print("Something goes wrong!!!")
         print(ex)
