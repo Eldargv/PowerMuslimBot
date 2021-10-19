@@ -16,6 +16,6 @@ def set_hook():
     bot.close()
 
 
-def start():
+if __name__=="__main__":
     from bot.bot import main
     main()
