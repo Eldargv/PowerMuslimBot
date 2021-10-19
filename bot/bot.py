@@ -60,8 +60,9 @@ async def get_random_verse(message: types.Message):
     await message.answer(correct(rnum + rtext))
 
 
-@dp.message_handler(ignore_mention=True)
+@dp.message_handler()
 async def reply(message: types.Message):
+    print(message)
     surah_ayah = re.split(', | |:|,', message.text)
     msg = ""
     try:
