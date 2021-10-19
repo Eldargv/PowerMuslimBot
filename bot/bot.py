@@ -117,7 +117,7 @@ async def my_func():
     # твоя логика с отправкой сообщений тут
     num = random.randint(1, 114)
     rnum, rtext = random.choice(list(Quran[str(num)].items()))
-    bot.send_message(rnum + rtext)
+    bot.send_message(-629664099, rnum + rtext)
     when_to_call = loop.time() + delay  # delay -- промежуток времени в секундах.
     loop.call_at(when_to_call, my_callback)
 
