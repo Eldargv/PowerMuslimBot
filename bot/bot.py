@@ -54,7 +54,7 @@ async def start(message: types.Message):
 @dp.message_handler(commands="random")
 async def get_random_verse(message: types.Message):
     num = random.randint(1, 114)
-    rnum, rtext = random.choice(Quran[str(num)].items())
+    rnum, rtext = random.choice(list(Quran[str(num)].items()))
     await message.answer(correct(rnum + rtext))
 
 
