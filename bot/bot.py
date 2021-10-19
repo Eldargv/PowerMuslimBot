@@ -28,6 +28,8 @@ class IncorrectSurah(Exception):
 class IncorrectAyah(Exception):
     pass
 
+class InCorrectInput(Exception):
+    pass
 
 def correct(msg):
     explanation_index = msg.find('***')
@@ -60,9 +62,12 @@ async def get_random_verse(message: types.Message):
 
 @dp.message_handler()
 async def reply(message: types.Message):
-    surah, ayah = re.split(', | |:|,', message.text)
+    surah_ayah = re.split(', | |:|,', message.text)
     msg = ""
     try:
+        if len(surah_ayah) != 2:
+            raise InCorrectInput
+        surah, ayah = surah_ayah
         if not surah.isdigit() or not ayah.isdigit():
             raise NotDigit
         print("nums got", surah, ayah)
