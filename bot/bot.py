@@ -101,9 +101,10 @@ async def get_specific_verse(message: types.Message):
     await message.answer(correct(msg))
 
 
-@dp.message_handler(chat_type=types.ChatType.PRIVATE)
-@dp.message_handler(filters.Text(contains='@PowerMuslimBot'), ignore_mention=True)
+@dp.message_handler(chat_type=types.ChatType.GROUP)
+@dp.message_handler(filters.Text(contains='@PowerMuslimBot'))
 async def get_specific_verse(message: types.Message):
+    message.text.replace('@PowerMuslimBot ', '')
     surah_ayah = re.split(', | |:|,', message.text)
     msg = ""
     try:
