@@ -149,7 +149,7 @@ async def motivation_words(message: types.Message):
     await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
 
 
-@dp.chat_member_handler()
+@dp.my_chat_member_handler()
 async def chat_member_handler(update: types.ChatMemberUpdated):
     print("New chat update")
     print(update.chat.id)
