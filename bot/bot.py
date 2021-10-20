@@ -3,7 +3,6 @@ import logging
 import random
 import re
 import asyncio
-from aiogram.types import message_entity
 import aioschedule
 
 from aiogram import Bot, Dispatcher, types
@@ -149,11 +148,13 @@ async def motivation_words(message: types.Message):
     await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
 
 
-@dp.my_chat_member_handler()
+@dp.my_chat_member_handler(chat_type='group')
 async def chat_member_handler(update: types.ChatMemberUpdated):
     print("New chat update")
     print(update.chat.id)
-    await bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
+    stat = update.new_chat_member.is_chat_member()
+    if (stat):
+        await update.bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
 
 
 async def time_send():
