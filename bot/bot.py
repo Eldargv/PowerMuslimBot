@@ -105,8 +105,7 @@ async def get_specific_verse(message: types.Message):
 
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
 async def get_specific_verse(message: types.Message):
-    ftext = message.text
-    ftext.replace('@PowerMuslimBot ', '')
+    ftext = message.text.replace('@PowerMuslimBot ', '')
     print(ftext)
     surah_ayah = re.split(', | |:|,', ftext)
     msg = ""
