@@ -112,7 +112,7 @@ async def time_send():
 
 async def scheduler():
     print("Activating scheduler")
-    aioschedule.every().day.at("11:51").do()
+    aioschedule.every().day.at("11:53").do(time_send)
     while True:
         print("While True starts")
         await aioschedule.run_pending()
