@@ -102,16 +102,19 @@ async def reply(message: types.Message):
 
 
 async def time_send():
+    print("trying to send message")
     await bot.send_message(916354662, "Cегодняшняя подборка:")
     for i in range(3):
         num = random.randint(1, 114)
         rnum, rtext = random.choice(list(Quran[str(num)].items()))
-        await bot.send_message(916354662, rnum + rtext)        
+        await bot.send_message(916354662, correct(rnum + rtext))        
 
 
 async def scheduler():
+    print("Activating scheduler")
     aioschedule.every().day.at("11:27").do(time_send)
     while True:
+        print("While True starts")
         await aioschedule.run_pending()
         await asyncio.sleep(1)
 
