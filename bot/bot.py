@@ -157,7 +157,7 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
     print(update.chat.id)
     stat = update.new_chat_member.is_chat_member()
     if (stat):
-        cursor.execute(f'INSERT INTO Users VALUES (234, {update.chat.id})')
+        cursor.execute(f'INSERT INTO Users(user_id, chat_id) VALUES (234, {update.chat.id})')
         if update.chat.id not in Chats:
             Chats.append(update.chat.id)
         await update.bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
