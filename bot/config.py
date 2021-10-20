@@ -3,6 +3,7 @@ import os
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 HEROKU_APP_NAME = os.getenv('HEROKU_APP_NAME')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 # token = "2058815292:AAFpWPRwz4PDbwyy9QGXviuPl5TvN3e9PvM"
 # heroku = "https://powermuslimbot.herokuapp.com/"

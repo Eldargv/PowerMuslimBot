@@ -4,6 +4,7 @@ import random
 import re
 import asyncio
 import aioschedule
+import psycopg2
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
@@ -11,12 +12,14 @@ from aiogram.utils.executor import start_webhook
 from aiogram.dispatcher import filters
 from bot.config import (BOT_TOKEN, HEROKU_APP_NAME,
                           WEBHOOK_URL, WEBHOOK_PATH,
-                          WEBAPP_HOST, WEBAPP_PORT)
+                          WEBAPP_HOST, WEBAPP_PORT, DATABASE_URL)
 
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+cursor = conn.cursor()
 Quran = json
 Chats = [-691197382, 916354662]
 motivation = ["Молодец", "Отлично", "Шикарный день"]
@@ -154,6 +157,7 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
     print(update.chat.id)
     stat = update.new_chat_member.is_chat_member()
     if (stat):
+        cursor.execute(f'INSERT INTO Users VALUES (234, {update.chat.id})')
         if update.chat.id not in Chats:
             Chats.append(update.chat.id)
         await update.bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
