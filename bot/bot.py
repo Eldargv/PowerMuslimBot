@@ -113,7 +113,10 @@ async def time_send():
 
 async def scheduler():
     print("Activating scheduler")
-    aioschedule.every().day.at("12:10").do(time_send)
+    # Время на сервере UTC+0
+    # Московское +3
+    # Следовательно, из желаемого времени нужно вычесть 3
+    aioschedule.every().day.at("9:14").do(time_send)
     while True:
         print(datetime.now())
         await aioschedule.run_pending()
