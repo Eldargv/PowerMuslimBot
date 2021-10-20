@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging
 import random
@@ -112,9 +113,9 @@ async def time_send():
 
 async def scheduler():
     print("Activating scheduler")
-    aioschedule.every().day.at("11:53").do(time_send)
+    aioschedule.every().day.at("12:00").do(time_send)
     while True:
-        print("While True starts")
+        print(datetime.now())
         await aioschedule.run_pending()
         await asyncio.sleep(1)
 
