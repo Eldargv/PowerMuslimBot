@@ -19,7 +19,6 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-cursor = conn.cursor()
 Quran = json
 Chats = [-691197382, 916354662]
 motivation = ["Молодец", "Отлично", "Шикарный день"]
@@ -157,7 +156,11 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
     print(update.chat.id)
     stat = update.new_chat_member.is_chat_member()
     if (stat):
+        cursor = conn.cursor()
+        print("Trying to insert in table")
         cursor.execute(f'INSERT INTO Users(user_id, chat_id) VALUES (234, {update.chat.id})')
+        cursor.commit()
+        cursor.close()
         if update.chat.id not in Chats:
             Chats.append(update.chat.id)
         await update.bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
