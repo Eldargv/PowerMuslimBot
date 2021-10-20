@@ -154,6 +154,8 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
     print(update.chat.id)
     stat = update.new_chat_member.is_chat_member()
     if (stat):
+        if update.chat.id not in Chats:
+            Chats.append(update.chat.id)
         await update.bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
 
 
@@ -170,7 +172,7 @@ async def time_send():
 async def morning_motivation():
     print("morining motivation activated")
     for id in Chats:
-        await bot.send_message(id, "Ну что, ребята, топим педаль газа в пол!")
+        await bot.send_message(id, "Ну что, ребята, топим педаль газа в пол! Идем к божественным подаркам в новом дне!")
 
 
 async def scheduler():
@@ -178,8 +180,8 @@ async def scheduler():
     # Время на сервере UTC+0
     # Московское +3
     # Следовательно, из желаемого времени нужно вычесть 3
-    aioschedule.every().day.at("14:33").do(time_send)
-    aioschedule.every().day.at("14:34").do(morning_motivation)
+    aioschedule.every().day.at("18:00").do(time_send)
+    aioschedule.every().day.at("3:00").do(morning_motivation)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
