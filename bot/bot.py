@@ -1,4 +1,3 @@
-from datetime import datetime
 import json
 import logging
 import random
@@ -6,7 +5,7 @@ import re
 import asyncio
 import aioschedule
 
-from aiogram import Bot, Dispatcher, types, filters
+from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.utils.executor import start_webhook
 from bot.config import (BOT_TOKEN, HEROKU_APP_NAME,
@@ -63,7 +62,7 @@ async def get_random_verse(message: types.Message):
     await message.answer(correct(rnum + rtext))
 
 
-@dp.message_handler()
+@dp.message_handler(chat_type=types.ChatType.PRIVATE)
 async def reply(message: types.Message):
     print(message)
     surah_ayah = re.split(', | |:|,', message.text)
@@ -116,9 +115,8 @@ async def scheduler():
     # Время на сервере UTC+0
     # Московское +3
     # Следовательно, из желаемого времени нужно вычесть 3
-    aioschedule.every().day.at("9:14").do(time_send)
+    aioschedule.every().day.at("18:00").do(time_send)
     while True:
-        print(datetime.now())
         await aioschedule.run_pending()
         await asyncio.sleep(1)
 
