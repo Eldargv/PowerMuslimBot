@@ -8,6 +8,7 @@ import aioschedule
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.utils.executor import start_webhook
+from aiogram.dispatcher import filters
 from bot.config import (BOT_TOKEN, HEROKU_APP_NAME,
                           WEBHOOK_URL, WEBHOOK_PATH,
                           WEBAPP_HOST, WEBAPP_PORT)
@@ -63,8 +64,46 @@ async def get_random_verse(message: types.Message):
 
 
 @dp.message_handler(chat_type=types.ChatType.PRIVATE)
-async def reply(message: types.Message):
-    print(message)
+async def get_specific_verse(message: types.Message):
+    surah_ayah = re.split(', | |:|,', message.text)
+    msg = ""
+    try:
+        if len(surah_ayah) != 2:
+            raise InCorrectInput
+        surah, ayah = surah_ayah
+        if not surah.isdigit() or not ayah.isdigit():
+            raise NotDigit
+        print("nums got", surah, ayah)
+        if 0 < int(surah) < 115:
+            verses = Quran[surah].items()
+            print("trying get ayah")
+            for n, t in verses:
+                nums = list(map(int, re.split('[-:,]', n)))
+                if nums[1] <= int(ayah) <= nums[-1]:
+                    print("Find!")
+                    msg = n + t
+                    break
+            if len(msg) == 0:
+                raise IncorrectAyah
+        else:
+            raise IncorrectSurah
+    except NotDigit:
+        msg = "Вы ввели не число"
+    except IncorrectSurah:
+        msg = "Неверный номер суры"
+    except IncorrectAyah:
+        msg = "Неверный номер аята"
+    except InCorrectInput:
+        msg = "Неправильный формат. Вы можете ввести номер суры и аята через пробел, запятую и двоеточие"
+    except Exception as ex:
+        print("Something goes wrong!!!")
+        print(ex)
+    await message.answer(correct(msg))
+
+
+@dp.message_handler(chat_type=types.ChatType.PRIVATE)
+@dp.message_handler(filters.Text(contains='@PowerMuslimBot'), ignore_mention=True)
+async def get_specific_verse(message: types.Message):
     surah_ayah = re.split(', | |:|,', message.text)
     msg = ""
     try:
