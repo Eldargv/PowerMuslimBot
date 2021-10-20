@@ -3,7 +3,7 @@ import logging
 import random
 import re
 import asyncio
-import datetime
+import aioschedule
 
 from aiogram import Bot, Dispatcher, types, filters
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
@@ -101,37 +101,36 @@ async def reply(message: types.Message):
     await message.answer(correct(msg))
 
 
+async def time_send():
+    await bot.send_message(916354662, "Cегодняшняя подборка:")
+    for i in range(3):
+        num = random.randint(1, 114)
+        rnum, rtext = random.choice(list(Quran[str(num)].items()))
+        await bot.send_message(916354662, rnum + rtext)        
+
+
+async def scheduler():
+    aioschedule.every().day.at("11:27").do(time_send)
+    while True:
+        await aioschedule.run_pending()
+        await asyncio.sleep(1)
+
+
 async def on_startup(dp):
     logging.warning(
         'Starting connection. ')
+    asyncio.create_task(scheduler())
     await bot.set_webhook(WEBHOOK_URL,drop_pending_updates=True)
 
 
 async def on_shutdown(dp):
     logging.warning('Bye! Shutting down webhook connection')
 
-loop = asyncio.get_event_loop()
-delay = 100.0
-
-async def my_func():
-    # твоя логика с отправкой сообщений тут
-    print("I AM IN MESSAGE")
-    num = random.randint(1, 114)
-    rnum, rtext = random.choice(list(Quran[str(num)].items()))
-    await bot.send_message(-629664099, rnum + rtext)
-    when_to_call = loop.time() + delay  # delay -- промежуток времени в секундах.
-    loop.call_at(when_to_call, my_callback)
-
-def my_callback():
-    print("TRYING to CALL BACK")
-    asyncio.ensure_future(my_func())
 
 def main():
     with open("Quran.json", encoding='utf-8') as file:
         global Quran
         Quran = json.load(file)
-
-    my_callback()
 
     logging.basicConfig(level=logging.INFO)
     start_webhook(
