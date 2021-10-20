@@ -102,7 +102,7 @@ async def get_specific_verse(message: types.Message):
     await message.answer(correct(msg))
 
 
-@dp.message_handler(chat_type=types.ChatType.GROUP)
+@dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
 async def get_specific_verse(message: types.Message):
     await message.answer(message.text)
     # if not ("@PowerMuslimBot message.text" in message.text):
