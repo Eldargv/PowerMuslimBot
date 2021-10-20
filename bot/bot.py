@@ -159,7 +159,7 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
         cursor = conn.cursor()
         print("Trying to insert in table")
         cursor.execute(f'INSERT INTO Users(user_id, chat_id) VALUES (234, {update.chat.id})')
-        cursor.commit()
+        conn.commit()
         cursor.close()
         if update.chat.id not in Chats:
             Chats.append(update.chat.id)
