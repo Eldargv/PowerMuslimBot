@@ -19,6 +19,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 Quran = json
+motivation = ["Молодец", "Отлично", "Шикарный день"]
 
 
 class NotDigit(Exception):
@@ -104,44 +105,47 @@ async def get_specific_verse(message: types.Message):
 
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
 async def get_specific_verse(message: types.Message):
-    await message.answer(message.text)
-    # if not ("@PowerMuslimBot message.text" in message.text):
-    #     return
-    # message.text.replace("@PowerMuslimBot ")
-    # surah_ayah = re.split(', | |:|,', message.text)
-    # msg = ""
-    # try:
-    #     if len(surah_ayah) != 2:
-    #         raise InCorrectInput
-    #     surah, ayah = surah_ayah
-    #     if not surah.isdigit() or not ayah.isdigit():
-    #         raise NotDigit
-    #     print("nums got", surah, ayah)
-    #     if 0 < int(surah) < 115:
-    #         verses = Quran[surah].items()
-    #         print("trying get ayah")
-    #         for n, t in verses:
-    #             nums = list(map(int, re.split('[-:,]', n)))
-    #             if nums[1] <= int(ayah) <= nums[-1]:
-    #                 print("Find!")
-    #                 msg = n + t
-    #                 break
-    #         if len(msg) == 0:
-    #             raise IncorrectAyah
-    #     else:
-    #         raise IncorrectSurah
-    # except NotDigit:
-    #     msg = "Вы ввели не число"
-    # except IncorrectSurah:
-    #     msg = "Неверный номер суры"
-    # except IncorrectAyah:
-    #     msg = "Неверный номер аята"
-    # except InCorrectInput:
-    #     msg = "Неправильный формат. Вы можете ввести номер суры и аята через пробел, запятую и двоеточие"
-    # except Exception as ex:
-    #     print("Something goes wrong!!!")
-    #     print(ex)
-    # await message.answer(correct(msg))
+    ftext = message.text
+    ftext.replace('@PowerMuslimBot ', '')
+    surah_ayah = re.split(', | |:|,', ftext)
+    msg = ""
+    try:
+        if len(surah_ayah) != 2:
+            raise InCorrectInput
+        surah, ayah = surah_ayah
+        if not surah.isdigit() or not ayah.isdigit():
+            raise NotDigit
+        print("nums got", surah, ayah)
+        if 0 < int(surah) < 115:
+            verses = Quran[surah].items()
+            print("trying get ayah")
+            for n, t in verses:
+                nums = list(map(int, re.split('[-:,]', n)))
+                if nums[1] <= int(ayah) <= nums[-1]:
+                    print("Find!")
+                    msg = n + t
+                    break
+            if len(msg) == 0:
+                raise IncorrectAyah
+        else:
+            raise IncorrectSurah
+    except NotDigit:
+        msg = "Вы ввели не число"
+    except IncorrectSurah:
+        msg = "Неверный номер суры"
+    except IncorrectAyah:
+        msg = "Неверный номер аята"
+    except InCorrectInput:
+        msg = "Неправильный формат. Вы можете ввести номер суры и аята через пробел, запятую и двоеточие"
+    except Exception as ex:
+        print("Something goes wrong!!!")
+        print(ex)
+    await message.answer(correct(msg))
+
+
+@dp.message_handler(hashtags='отчетзадень')
+async def motivation_words(message: types.Message):
+    await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
 
 
 async def time_send():
