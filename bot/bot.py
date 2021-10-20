@@ -104,7 +104,7 @@ async def get_specific_verse(message: types.Message):
 
 @dp.message_handler(chat_type=types.ChatType.GROUP)
 async def get_specific_verse(message: types.Message):
-    if not "@PowerMuslimBot message.text" in message.text:
+    if not ("@PowerMuslimBot message.text" in message.text):
         return
     message.text.replace("@PowerMuslimBot ")
     surah_ayah = re.split(', | |:|,', message.text)
