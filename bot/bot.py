@@ -151,6 +151,8 @@ async def motivation_words(message: types.Message):
 
 @dp.chat_member_handler()
 async def chat_member_handler(update: types.ChatMemberUpdated):
+    print("New chat update")
+    print(update.chat.id)
     await bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
 
 
