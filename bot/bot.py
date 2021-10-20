@@ -19,6 +19,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 Quran = json
+Chats = [-691197382, 916354662]
 motivation = ["Молодец", "Отлично", "Шикарный день"]
 
 
@@ -148,13 +149,25 @@ async def motivation_words(message: types.Message):
     await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
 
 
+@dp.chat_member_handler()
+async def chat_member_handler(update: types.ChatMemberUpdated):
+    await bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
+
+
 async def time_send():
     print("trying to send message")
-    await bot.send_message(916354662, "Cегодняшняя подборка:")
-    for i in range(3):
-        num = random.randint(1, 114)
-        rnum, rtext = random.choice(list(Quran[str(num)].items()))
-        await bot.send_message(916354662, correct(rnum + rtext))        
+    for id in Chats:
+        await bot.send_message(id, "Cегодняшняя подборка:")
+        for i in range(3):
+            num = random.randint(1, 114)
+            rnum, rtext = random.choice(list(Quran[str(num)].items()))
+            await bot.send_message(id, correct(rnum + rtext))
+
+
+async def morning_motivation():
+    print("morining motivation activated")
+    for id in Chats:
+        await bot.send_message(id, "Ну что, ребята, топим педаль газа в пол!")
 
 
 async def scheduler():
@@ -162,7 +175,8 @@ async def scheduler():
     # Время на сервере UTC+0
     # Московское +3
     # Следовательно, из желаемого времени нужно вычесть 3
-    aioschedule.every().day.at("18:00").do(time_send)
+    aioschedule.every().day.at("14:33").do(time_send)
+    aioschedule.every().day.at("14:34").do(morning_motivation)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
