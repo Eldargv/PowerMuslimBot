@@ -109,7 +109,7 @@ async def get_specific_verse(message: types.Message):
 @dp.message_handler(commands="register", chat_type='group')
 async def register(message: types.Message):
     if '@' in message.text:
-        user = message.text.replace('@', '')
+        user = message.text.replace('/register @', '')
         chat_id = message.chat.id
         cursor = conn.cursor()
         cursor.execute(f"INSERT INTO Users VALUES ('{user}', {chat_id}, false)")
