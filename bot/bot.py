@@ -238,7 +238,7 @@ async def scheduler():
     # Следовательно, из желаемого времени нужно вычесть 3
     aioschedule.every().day.at("18:00").do(time_send)
     aioschedule.every().day.at("3:00").do(morning_motivation)
-    aioschedule.every().day.at("15:15").do(reports_checker)
+    aioschedule.every().day.at("15:18").do(reports_checker)
     # aioschedule.every().day.at("11:00").do(reports_cleaner)
     while True:
         await aioschedule.run_pending()
