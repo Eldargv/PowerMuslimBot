@@ -7,6 +7,7 @@ import aioschedule
 import psycopg2
 
 from aiogram import Bot, Dispatcher, types
+from aiogram.utils import markdown
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.utils.executor import start_webhook
 from aiogram.dispatcher import filters
@@ -108,7 +109,7 @@ async def get_specific_verse(message: types.Message):
 
 @dp.message_handler()
 async def register(message: types.Message):
-    await message.answer(message)
+    await message.answer(f'[inline mention of a user](tg://user?id={message.from_user.id})', parse_mode=markdown)
     # bot.send_message()
     # if '@' in message.text:
     #     user = message.text.replace('/register @', '')
