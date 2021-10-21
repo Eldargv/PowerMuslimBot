@@ -13,6 +13,7 @@ from aiogram.dispatcher import filters
 from bot.config import (BOT_TOKEN, HEROKU_APP_NAME,
                           WEBHOOK_URL, WEBHOOK_PATH,
                           WEBAPP_HOST, WEBAPP_PORT, DATABASE_URL)
+from datetime import datetime
 
 
 bot = Bot(token=BOT_TOKEN)
@@ -22,7 +23,7 @@ conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 conn.autocommit = True
 Quran = json
 Chats = [-691197382, 916354662]
-motivation = ["Молодец", "Отлично", "Шикарный день"]
+motivation = ["Молодец", "Отлично", "Шикарный день", "Принято"]
 
 
 class NotDigit(Exception):
@@ -106,19 +107,16 @@ async def get_specific_verse(message: types.Message):
     await message.answer(correct(msg))
 
 
-@dp.message_handler()
+@dp.message_handler(commands="register")
 async def register(message: types.Message):
-    await message.answer(f'[inline mention of a user](tg://user?id={message.from_user.id})', parse_mode='Markdown')
-    # bot.send_message()
-    # if '@' in message.text:
-    #     user = message.text.replace('/register @', '')
-    #     chat_id = message.chat.id
-    #     cursor = conn.cursor()
-    #     cursor.execute(f"INSERT INTO Users VALUES ('{user}', {chat_id}, false)")
-    #     cursor.close()
-    #     await message.answer(f"Игрок @{user} зарегистрирован!")
-    # else:
-    #     await message.answer("Неверное имя пользователя")
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+    chat_id = message.chat.id
+    cursor = conn.cursor()
+    cursor.execute(f"INSERT INTO Users (user_id, user_name, chat_id, reports) VALUES ('{user_id}', '{user_name}', {chat_id}, false) ON CONFLICT DO NOTHING")
+    cursor.execute(f"INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING")
+    cursor.close()
+    await message.answer(f"Игрок №{user_id} зарегистрирован!")
 
 
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
@@ -163,11 +161,13 @@ async def get_specific_verse(message: types.Message):
 
 @dp.message_handler(hashtags='отчетзадень')
 async def motivation_words(message: types.Message):
-    cursor = conn.cursor()
-    user = message.from_user.username
-    cursor.execute(f"UPDATE Users SET reports = true WHERE user_handle = '{user}'")
-    cursor.close()
-    await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
+    # UTC+3: 15 23
+    if 12 <= datetime.now().hour() <= 20:
+        cursor = conn.cursor()
+        user = message.from_user.username
+        cursor.execute(f"UPDATE Users SET reports = true WHERE user_handle = '{user}'")
+        cursor.close()
+        await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
 
 
 @dp.my_chat_member_handler(chat_type='group')
@@ -200,6 +200,37 @@ async def morning_motivation():
         await bot.send_message(id, "Ну что, ребята, топим педаль газа в пол! Идем к божественным подаркам в новом дне!")
 
 
+async def reports_checker():
+    cursor = conn.cursor()
+    # Забираем из таблицы все id чатов-групп
+    cursor.execute('SELECT chat_id FROM Chats')
+    # Строим массив
+    chat_list = [int(chat_id[0]) for chat_id in cursor.fetchall()]
+    # Забираем из второй таблицы юзеров
+    cursor.execute('SELECT user_id, user_name, chat_id FROM Users WHERE reports = false')
+    # Кладем в массив
+    users = cursor.fetchall()
+    cursor.close()
+    # Начинаме собирать сообщения с индексами юзеров
+    messages = {}
+    # Строго задаем словарь
+    for chat_id in chat_list:
+        messages[chat_id] = ""
+    # Собираем сообщения с id юзеров
+    for user_id, user_name, chat_id in users:
+        messages[int(chat_id)] += f"[{user_name}](tg://user?id={user_id}), "
+    # Собираем для каждого чата сообщение с теми, кто не прислал отчет
+    for chat_id, message in messages.items():
+        if len(message) == 0:
+            await bot.send_message(int(chat_id), "Молодцы, ребята! Сегодня все прислали отчеты!")
+        else:
+            await bot.send_message(int(chat_id), "Не понял, а где отчеты " + message[:-2] + " ...", parse_mode='Markdown')
+
+
+# async def reports_cleaner():
+
+
+
 async def scheduler():
     print("Activating scheduler")
     # Время на сервере UTC+0
@@ -207,6 +238,8 @@ async def scheduler():
     # Следовательно, из желаемого времени нужно вычесть 3
     aioschedule.every().day.at("18:00").do(time_send)
     aioschedule.every().day.at("3:00").do(morning_motivation)
+    aioschedule.every().day.at("15:15").do(reports_checker)
+    # aioschedule.every().day.at("11:00").do(reports_cleaner)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
