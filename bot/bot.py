@@ -236,7 +236,7 @@ async def reports_cleaner():
     cursor.execute('SELECT chat_id FROM Chats')
     chats = cursor.fetchall()
     for chat_id in chats:
-        cursor.execute(f'UPDATE Users SET reports = false WHERE chat_id = {chat_id[0]} ON CONFLICT DO NOTHING')
+        cursor.execute(f'UPDATE Users SET reports = false WHERE chat_id = {chat_id[0]}')
     cursor.close()
 
 
@@ -248,7 +248,7 @@ async def scheduler():
     aioschedule.every().day.at("18:00").do(time_send)
     aioschedule.every().day.at("3:00").do(morning_motivation)
     aioschedule.every().day.at("15:18").do(reports_checker)
-    aioschedule.every().day.at("17:14").do(reports_cleaner)
+    aioschedule.every().day.at("17:20").do(reports_cleaner)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
