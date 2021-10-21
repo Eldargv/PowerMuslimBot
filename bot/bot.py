@@ -106,18 +106,19 @@ async def get_specific_verse(message: types.Message):
     await message.answer(correct(msg))
 
 
-@dp.message_handler(commands="register", chat_type='group')
+@dp.message_handler()
 async def register(message: types.Message):
-    print(message)
-    if '@' in message.text:
-        user = message.text.replace('/register @', '')
-        chat_id = message.chat.id
-        cursor = conn.cursor()
-        cursor.execute(f"INSERT INTO Users VALUES ('{user}', {chat_id}, false)")
-        cursor.close()
-        await message.answer(f"Игрок @{user} зарегистрирован!")
-    else:
-        await message.answer("Неверное имя пользователя")
+    await message.answer(message)
+    # bot.send_message()
+    # if '@' in message.text:
+    #     user = message.text.replace('/register @', '')
+    #     chat_id = message.chat.id
+    #     cursor = conn.cursor()
+    #     cursor.execute(f"INSERT INTO Users VALUES ('{user}', {chat_id}, false)")
+    #     cursor.close()
+    #     await message.answer(f"Игрок @{user} зарегистрирован!")
+    # else:
+    #     await message.answer("Неверное имя пользователя")
 
 
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
