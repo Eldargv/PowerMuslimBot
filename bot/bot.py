@@ -165,7 +165,7 @@ async def motivation_words(message: types.Message):
     if 12 <= datetime.now().hour <= 20:
         cursor = conn.cursor()
         user_id = message.from_user.id
-        cursor.execute(f"UPDATE Users SET reports = true WHERE user_handle = '{user_id}'")
+        cursor.execute(f"UPDATE Users SET reports = true WHERE user_id = '{user_id}'")
         cursor.close()
         await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
 
