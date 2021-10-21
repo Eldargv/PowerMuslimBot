@@ -23,7 +23,7 @@ conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 conn.autocommit = True
 Quran = json
 Chats = [-691197382, 916354662]
-motivation = ["Молодец", "Отлично", "Шикарный день", "Принято"]
+motivation = ["Молодец", "Отлично", "Шикарный день", "Принято", "МАШОЛЛО"]
 
 
 class NotDigit(Exception):
@@ -107,18 +107,6 @@ async def get_specific_verse(message: types.Message):
     await message.answer(correct(msg))
 
 
-@dp.message_handler(commands="register")
-async def register(message: types.Message):
-    user_id = message.from_user.id
-    user_name = message.from_user.first_name
-    chat_id = message.chat.id
-    cursor = conn.cursor()
-    cursor.execute(f"INSERT INTO Users (user_id, user_name, chat_id, reports) VALUES ('{user_id}', '{user_name}', {chat_id}, false) ON CONFLICT DO NOTHING")
-    cursor.execute(f"INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING")
-    cursor.close()
-    await message.answer(f"Игрок №{user_id} зарегистрирован!")
-
-
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
 async def get_specific_verse(message: types.Message):
     ftext = message.text.replace('@PowerMuslimBot ', '')
@@ -159,6 +147,18 @@ async def get_specific_verse(message: types.Message):
     await message.answer(correct(msg))
 
 
+@dp.message_handler(commands="register", chat_type='group')
+async def register(message: types.Message):
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+    chat_id = message.chat.id
+    cursor = conn.cursor()
+    cursor.execute(f"INSERT INTO Users (user_id, user_name, chat_id, reports) VALUES ('{user_id}', '{user_name}', {chat_id}, false) ON CONFLICT DO NOTHING")
+    cursor.execute(f"INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING")
+    cursor.close()
+    await message.answer(f"Игрок №{user_id} зарегистрирован!")
+
+
 @dp.message_handler(hashtags='отчетзадень')
 async def motivation_words(message: types.Message):
     # UTC+3: 15 23
@@ -177,11 +177,15 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
     print(chat_id)
     stat = update.new_chat_member.is_chat_member()
     if (stat):
-        # cursor = conn.cursor()
-        # print("Trying to insert in table")
-        # cursor.execute(f'INSERT INTO Users VALUES (234, {chat_id})')
-        # cursor.close()
+        cursor = conn.cursor()
+        cursor.execute(f'INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING')
+        cursor.close()
         await update.bot.send_message(chat_id, "Всем ас-саляму алейкум!")
+    else:
+        cursor = conn.cursor()
+        cursor.execute(f"DELETE FROM Chats WHERE chat_id = {chat_id} ON CONFLICT DO NOTHING")
+        cursor.execute(f"DELETE FROM Users WHERE chat_id = {chat_id} ON CONFLICT DO NOTHING")
+        cursor.close()
 
 
 async def time_send():
@@ -227,8 +231,13 @@ async def reports_checker():
             await bot.send_message(int(chat_id), "Не понял, а где отчеты от " + message[:-2] + " ...", parse_mode='Markdown')
 
 
-# async def reports_cleaner():
-
+async def reports_cleaner():
+    cursor = conn.cursor()
+    cursor.execute('SELECT chat_id FROM Chats')
+    chats = cursor.fetchall()
+    for chat_id in chats:
+        cursor.execute(f'UPDATE Users SET reports = false WHERE user_id = {int(chat_id)}')
+    cursor.close()
 
 
 async def scheduler():
@@ -239,7 +248,7 @@ async def scheduler():
     aioschedule.every().day.at("18:00").do(time_send)
     aioschedule.every().day.at("3:00").do(morning_motivation)
     aioschedule.every().day.at("15:18").do(reports_checker)
-    # aioschedule.every().day.at("11:00").do(reports_cleaner)
+    aioschedule.every().day.at("17:00").do(reports_cleaner)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
