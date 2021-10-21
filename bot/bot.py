@@ -22,7 +22,7 @@ dp.middleware.setup(LoggingMiddleware())
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 conn.autocommit = True
 Quran = json
-motivation = ["Молодец", "Отлично", "Шикарный день", "Принято", "МАШОЛЛО"]
+motivation = ["Чё творит вообще", "Мощь", "Гений", "Молодец", "Отлично", "Шикарный день", "Принято", "МАШОЛЛО", "Победитель по жизни", "Финансовый гений", "Мастер своего дела", "Акула"]
 stickers = [
     'CAACAgIAAxkBAAEDIAdhcaOCtoVYU-LuZ73VCJsFY-eMyQACeBQAAhDEYEsdr5puuyESPCEE',
     'CAACAgIAAxkBAAEDIA9hcaQdKET0Z9gbNU0TrbPJ7E2vfgACKREAAmosWEtNPXH3WL3P7CEE'
@@ -175,7 +175,7 @@ async def motivation_words(message: types.Message):
         cursor.execute(f"UPDATE Users SET reports = true WHERE user_id = '{user_id}'")
         cursor.close()
         if random.randint(0, 1) == 0:
-            await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
+            await message.reply(random.choice(motivation) + ' ' + message.from_user.first_name + '!')
         else:
             await message.reply_sticker(random.choice(stickers))
 
