@@ -188,7 +188,7 @@ async def scheduler():
     # Московское +3
     # Следовательно, из желаемого времени нужно вычесть 3
     aioschedule.every().day.at("18:00").do(time_send)
-    aioschedule.every().day.at("3:00").do(morning_motivation)
+    aioschedule.every().day.at("5:10").do(morning_motivation)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
