@@ -22,11 +22,14 @@ dp.middleware.setup(LoggingMiddleware())
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 conn.autocommit = True
 Quran = json
-Chats = [-691197382, 916354662]
 motivation = ["Молодец", "Отлично", "Шикарный день", "Принято", "МАШОЛЛО"]
 stickers = [
     'CAACAgIAAxkBAAEDIAdhcaOCtoVYU-LuZ73VCJsFY-eMyQACeBQAAhDEYEsdr5puuyESPCEE',
     'CAACAgIAAxkBAAEDIA9hcaQdKET0Z9gbNU0TrbPJ7E2vfgACKREAAmosWEtNPXH3WL3P7CEE'
+]
+sticker_demotivation = [
+    'CAACAgIAAxkBAAEDIBFhcaTD0FFMFre074ZesVLQERuSEQACmw8AAsjPUEvYEF3ycvz7vyEE',
+    'CAACAgIAAxkBAAEDIAthcaPOKzORs6eyNBpjEIHkH0RFLgACKREAAo4bYEsDJz2fSmNFNiEE'
 ]
 
 
@@ -187,7 +190,15 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
         cursor = conn.cursor()
         cursor.execute(f'INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING')
         cursor.close()
-        await update.bot.send_message(chat_id, "Всем ас-саляму алейкум!")
+        await update.bot.send_message(chat_id,
+                                                "Всем ас-саляму алейкум! Отныне я незаконно забираю власть в руки и буду менеджить ваши отчеты! "
+                                                "\nОтчеты принимаются с 15:00 до 23:00 по мск. В 22:00 я тегну всех, кто не сдал отчеты к этому времени."
+                                                " Чтобы зарегистрироваться, отправьте \\register."
+                                                "\nТакже я каждый день в 21:00 буду присылать подборку из трех случайно выбранных аятов."
+                                                " Чтобы вручную сгенерировать случайный аят, напишите \\random."
+                                                " Чтобы получить конкретный аят, тегните меня @PowerMuslimBot с сообщением номера суры и аята через пробел, "
+                                                "запятую или двоеточие. Всем удачи!"
+                                                )
     else:
         cursor = conn.cursor()
         cursor.execute(f"DELETE FROM Chats WHERE chat_id = {chat_id} ON CONFLICT DO NOTHING")
@@ -197,7 +208,11 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
 
 async def time_send():
     print("trying to send message")
-    for id in Chats:
+    cursor = conn.cursor()
+    cursor.execute('SELECT chat_id FROM Chats')
+    chat_list = [int(chat_id[0]) for chat_id in cursor.fetchall()]
+    cursor.close()
+    for id in chat_list:
         await bot.send_message(id, "Cегодняшняя подборка:")
         for i in range(3):
             num = random.randint(1, 114)
@@ -207,7 +222,11 @@ async def time_send():
 
 async def morning_motivation():
     print("morining motivation activated")
-    for id in Chats:
+    cursor = conn.cursor()
+    cursor.execute('SELECT chat_id FROM Chats')
+    chat_list = [int(chat_id[0]) for chat_id in cursor.fetchall()]
+    cursor.close()
+    for id in chat_list:
         await bot.send_message(id, "Ну что, ребята, топим педаль газа в пол! Идем к божественным подаркам в новом дне!")
 
 
@@ -236,7 +255,7 @@ async def reports_checker():
             await bot.send_message(int(chat_id), "Молодцы, ребята! Сегодня все прислали отчеты!")
         else:
             await bot.send_message(int(chat_id), "Не понял, а где отчеты от " + message[:-2] + " ...", parse_mode='Markdown')
-            await bot.send_sticker(int(chat_id), 'CAACAgIAAxkBAAEDIAthcaPOKzORs6eyNBpjEIHkH0RFLgACKREAAo4bYEsDJz2fSmNFNiEE')
+            await bot.send_sticker(int(chat_id), random.choice(sticker_demotivation))
 
 
 async def reports_cleaner():
@@ -255,8 +274,8 @@ async def scheduler():
     # Следовательно, из желаемого времени нужно вычесть 3
     aioschedule.every().day.at("18:00").do(time_send)
     aioschedule.every().day.at("3:00").do(morning_motivation)
-    aioschedule.every().day.at("17:38").do(reports_checker)
-    aioschedule.every().day.at("17:20").do(reports_cleaner)
+    aioschedule.every().day.at("19:00").do(reports_checker)
+    aioschedule.every().day.at("20:01").do(reports_cleaner)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
