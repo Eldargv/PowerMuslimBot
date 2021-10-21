@@ -154,7 +154,7 @@ async def get_specific_verse(message: types.Message):
     await message.answer(correct(msg))
 
 
-@dp.message_handler(commands="register", chat_type='group')
+@dp.message_handler(commands="register", chat_type=('group', 'supergroup'))
 async def register(message: types.Message):
     user_id = message.from_user.id
     user_name = message.from_user.first_name
