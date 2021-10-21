@@ -201,8 +201,8 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
                                                 )
     else:
         cursor = conn.cursor()
-        cursor.execute(f"DELETE FROM Chats WHERE chat_id = {chat_id} ON CONFLICT DO NOTHING")
-        cursor.execute(f"DELETE FROM Users WHERE chat_id = {chat_id} ON CONFLICT DO NOTHING")
+        cursor.execute(f"DELETE FROM Chats WHERE chat_id = {chat_id}")
+        cursor.execute(f"DELETE FROM Users WHERE chat_id = {chat_id}")
         cursor.close()
 
 
