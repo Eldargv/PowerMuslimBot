@@ -19,6 +19,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+conn.autocommit = True
 Quran = json
 Chats = [-691197382, 916354662]
 motivation = ["Молодец", "Отлично", "Шикарный день"]
@@ -105,6 +106,19 @@ async def get_specific_verse(message: types.Message):
     await message.answer(correct(msg))
 
 
+@dp.message_handler(commands="register", chat_type='group')
+async def register(message: types.Message):
+    if '@' in message.text:
+        user = message.text.replace('@', '')
+        chat_id = message.chat.id
+        cursor = conn.cursor()
+        cursor.execute(f"INSERT INTO Users VALUES ('{user}', {chat_id}, false)")
+        cursor.close()
+        await message.answer(f"Игрок @{user} зарегистрирован!")
+    else:
+        await message.answer("Неверное имя пользователя")
+
+
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
 async def get_specific_verse(message: types.Message):
     ftext = message.text.replace('@PowerMuslimBot ', '')
@@ -147,23 +161,25 @@ async def get_specific_verse(message: types.Message):
 
 @dp.message_handler(hashtags='отчетзадень')
 async def motivation_words(message: types.Message):
+    cursor = conn.cursor()
+    user = message.from_user.username
+    cursor.execute(f"UPDATE Users SET reports = true WHERE user_handle = '{user}'")
+    cursor.close()
     await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
 
 
 @dp.my_chat_member_handler(chat_type='group')
 async def chat_member_handler(update: types.ChatMemberUpdated):
     print("New chat update")
-    print(update.chat.id)
+    chat_id = update.chat.id
+    print(chat_id)
     stat = update.new_chat_member.is_chat_member()
     if (stat):
-        cursor = conn.cursor()
-        print("Trying to insert in table")
-        cursor.execute(f'INSERT INTO Users(user_id, chat_id) VALUES (234, {update.chat.id})')
-        conn.commit()
-        cursor.close()
-        if update.chat.id not in Chats:
-            Chats.append(update.chat.id)
-        await update.bot.send_message(update.chat.id, "Всем ас-саляму алейкум!")
+        # cursor = conn.cursor()
+        # print("Trying to insert in table")
+        # cursor.execute(f'INSERT INTO Users VALUES (234, {chat_id})')
+        # cursor.close()
+        await update.bot.send_message(chat_id, "Всем ас-саляму алейкум!")
 
 
 async def time_send():
@@ -188,7 +204,7 @@ async def scheduler():
     # Московское +3
     # Следовательно, из желаемого времени нужно вычесть 3
     aioschedule.every().day.at("18:00").do(time_send)
-    aioschedule.every().day.at("5:10").do(morning_motivation)
+    aioschedule.every().day.at("3:00").do(morning_motivation)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
