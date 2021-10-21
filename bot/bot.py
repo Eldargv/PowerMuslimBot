@@ -180,7 +180,7 @@ async def motivation_words(message: types.Message):
             await message.reply_sticker(random.choice(stickers))
 
 
-@dp.my_chat_member_handler(chat_type='group')
+@dp.my_chat_member_handler(chat_type=('group', 'supergroup'))
 async def chat_member_handler(update: types.ChatMemberUpdated):
     print("New chat update")
     chat_id = update.chat.id
