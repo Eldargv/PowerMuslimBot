@@ -162,7 +162,7 @@ async def get_specific_verse(message: types.Message):
 @dp.message_handler(hashtags='отчетзадень')
 async def motivation_words(message: types.Message):
     # UTC+3: 15 23
-    if 12 <= datetime.now().hour() <= 20:
+    if 12 <= datetime.now().hour() and datetime.now().hour <= 20:
         cursor = conn.cursor()
         user = message.from_user.username
         cursor.execute(f"UPDATE Users SET reports = true WHERE user_handle = '{user}'")
@@ -224,7 +224,7 @@ async def reports_checker():
         if len(message) == 0:
             await bot.send_message(int(chat_id), "Молодцы, ребята! Сегодня все прислали отчеты!")
         else:
-            await bot.send_message(int(chat_id), "Не понял, а где отчеты " + message[:-2] + " ...", parse_mode='Markdown')
+            await bot.send_message(int(chat_id), "Не понял, а где отчеты от " + message[:-2] + " ...", parse_mode='Markdown')
 
 
 # async def reports_cleaner():
