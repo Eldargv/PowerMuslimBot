@@ -24,6 +24,10 @@ conn.autocommit = True
 Quran = json
 Chats = [-691197382, 916354662]
 motivation = ["Молодец", "Отлично", "Шикарный день", "Принято", "МАШОЛЛО"]
+stickers = [
+    'CAACAgIAAxkBAAEDIAdhcaOCtoVYU-LuZ73VCJsFY-eMyQACeBQAAhDEYEsdr5puuyESPCEE',
+    'CAACAgIAAxkBAAEDIA9hcaQdKET0Z9gbNU0TrbPJ7E2vfgACKREAAmosWEtNPXH3WL3P7CEE'
+]
 
 
 class NotDigit(Exception):
@@ -167,7 +171,10 @@ async def motivation_words(message: types.Message):
         user_id = message.from_user.id
         cursor.execute(f"UPDATE Users SET reports = true WHERE user_id = '{user_id}'")
         cursor.close()
-        await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
+        if random.randint(0, 1) == 0:
+            await message.reply(random.choice(motivation) + ', ' + message.from_user.first_name + '!')
+        else:
+            await message.reply_sticker(random.choice(stickers))
 
 
 @dp.my_chat_member_handler(chat_type='group')
@@ -229,6 +236,7 @@ async def reports_checker():
             await bot.send_message(int(chat_id), "Молодцы, ребята! Сегодня все прислали отчеты!")
         else:
             await bot.send_message(int(chat_id), "Не понял, а где отчеты от " + message[:-2] + " ...", parse_mode='Markdown')
+            await bot.send_sticker(int(chat_id), 'CAACAgIAAxkBAAEDIAthcaPOKzORs6eyNBpjEIHkH0RFLgACKREAAo4bYEsDJz2fSmNFNiEE')
 
 
 async def reports_cleaner():
@@ -247,7 +255,7 @@ async def scheduler():
     # Следовательно, из желаемого времени нужно вычесть 3
     aioschedule.every().day.at("18:00").do(time_send)
     aioschedule.every().day.at("3:00").do(morning_motivation)
-    aioschedule.every().day.at("15:18").do(reports_checker)
+    aioschedule.every().day.at("17:38").do(reports_checker)
     aioschedule.every().day.at("17:20").do(reports_cleaner)
     while True:
         await aioschedule.run_pending()
