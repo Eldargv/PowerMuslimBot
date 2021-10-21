@@ -192,7 +192,7 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
         cursor.close()
         await update.bot.send_message(chat_id,
                                                 "Всем ас-саляму алейкум! Отныне я незаконно забираю власть в руки и буду менеджить ваши отчеты! "
-                                                "\nОтчеты принимаются с 15:00 до 23:00 по мск. В 22:00 я тегну всех, кто не сдал отчеты к этому времени."
+                                                "\nОтчеты принимаются с 15:00 до 00:00 по мск. В 22:00 я тегну всех, кто не сдал отчеты к этому времени."
                                                 " Чтобы зарегистрироваться, отправьте /register."
                                                 "\n\nТакже я каждый день в 21:00 буду присылать подборку из трех случайно выбранных аятов."
                                                 " Чтобы вручную сгенерировать случайный аят, напишите \\random."
@@ -260,10 +260,30 @@ async def reports_checker():
 
 async def reports_cleaner():
     cursor = conn.cursor()
+    # Забираем из таблицы все id чатов-групп
     cursor.execute('SELECT chat_id FROM Chats')
-    chats = cursor.fetchall()
-    for chat_id in chats:
-        cursor.execute(f'UPDATE Users SET reports = false WHERE chat_id = {chat_id[0]}')
+    # Строим массив
+    chat_list = [int(chat_id[0]) for chat_id in cursor.fetchall()]
+    # Забираем из второй таблицы юзеров
+    cursor.execute('SELECT user_id, user_name, chat_id FROM Users WHERE reports = false')
+    # Кладем в массив
+    users = cursor.fetchall()
+    # Начинаме собирать сообщения с индексами юзеров
+    messages = {}
+    # Строго задаем словарь
+    for chat_id in chat_list:
+        messages[chat_id] = ""
+    # Собираем сообщения с id юзеров
+    for user_id, user_name, chat_id in users:
+        messages[int(chat_id)] += f"[{user_name}](tg://user?id={user_id}), "
+    # Собираем для каждого чата сообщение с теми, кто не прислал отчет
+    for chat_id, message in messages.items():
+        cursor.execute(f'UPDATE Users SET reports = false WHERE chat_id = {int(chat_id)}')
+        if len(message) == 0:
+            await bot.send_message(int(chat_id), "Молодцы, ребята! Сегодня все прислали отчеты!")
+        else:
+            await bot.send_message(int(chat_id), "Так и не дождался отчётов от " + message[:-2] + " (((", parse_mode='Markdown')
+            await bot.send_sticker(int(chat_id), random.choice(sticker_demotivation))
     cursor.close()
 
 
@@ -275,7 +295,7 @@ async def scheduler():
     aioschedule.every().day.at("18:00").do(time_send)
     aioschedule.every().day.at("3:00").do(morning_motivation)
     aioschedule.every().day.at("19:00").do(reports_checker)
-    aioschedule.every().day.at("20:01").do(reports_cleaner)
+    aioschedule.every().day.at("21:00").do(reports_cleaner)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
