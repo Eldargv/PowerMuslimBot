@@ -8,6 +8,7 @@ import psycopg2
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.types.message import ContentType
 from aiogram.types.bot_command import BotCommand
 from aiogram.types.bot_command_scope import BotCommandScopeAllGroupChats, BotCommandScopeAllPrivateChats
 from aiogram.utils.executor import start_webhook
@@ -110,7 +111,7 @@ async def register(message: types.Message):
     await message.answer(f"Игрок №{user_id} зарегистрирован!")
 
 
-@dp.message_handler(hashtags='отчетзадень')
+@dp.message_handler(content_types=ContentType.ANY, hashtags='отчетзадень')
 async def motivation_words(message: types.Message):
     # UTC+3: 15 23
     if 12 <= datetime.now().hour <= 20:
