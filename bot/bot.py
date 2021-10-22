@@ -8,6 +8,8 @@ import psycopg2
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.types.bot_command import BotCommand
+from aiogram.types.bot_command_scope import BotCommandScopeAllGroupChats, BotCommandScopeAllPrivateChats
 from aiogram.utils.executor import start_webhook
 from aiogram.dispatcher import filters
 from bot.config import (BOT_TOKEN, HEROKU_APP_NAME,
@@ -301,10 +303,24 @@ async def scheduler():
         await asyncio.sleep(1)
 
 
+async def set_default_commands():
+    print("Setting commands")
+    default_commands = [
+        BotCommand(command="random", description="Случайный аят"),
+    ]
+    await dp.bot.set_my_commands(default_commands)
+
+    group_commands = [
+        BotCommand(command="register", description="Зарегистрироваться в игру"),
+    ]
+    await dp.bot.set_my_commands(group_commands, BotCommandScopeAllGroupChats())
+
+
 async def on_startup(dp):
     logging.warning(
         'Starting connection. ')
     asyncio.create_task(scheduler())
+    await set_default_commands()
     await bot.set_webhook(WEBHOOK_URL,drop_pending_updates=True)
 
 
