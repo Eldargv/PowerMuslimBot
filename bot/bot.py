@@ -311,6 +311,7 @@ async def set_default_commands():
     await dp.bot.set_my_commands(default_commands)
 
     group_commands = [
+        BotCommand(command="random", description="Случайный аят"),
         BotCommand(command="register", description="Зарегистрироваться в игру"),
     ]
     await dp.bot.set_my_commands(group_commands, BotCommandScopeAllGroupChats())
