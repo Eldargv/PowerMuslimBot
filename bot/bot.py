@@ -202,7 +202,7 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
                                                 "\nОтчеты принимаются с 15:00 до 00:00 по мск. В 22:00 я тегну всех, кто не сдал отчеты к этому времени."
                                                 " Чтобы зарегистрироваться, отправьте /register."
                                                 "\n\nТакже я каждый день в 21:00 буду присылать подборку из трех случайно выбранных аятов."
-                                                " Чтобы вручную сгенерировать случайный аят, напишите \\random."
+                                                " Чтобы вручную сгенерировать случайный аят, напишите /random."
                                                 " Чтобы получить конкретный аят, тегните меня @PowerMuslimBot с сообщением номера суры и аята через пробел, "
                                                 "запятую или двоеточие. Всем удачи!"
                                                 )
@@ -279,7 +279,7 @@ async def scheduler():
     # Время на сервере UTC+0
     # Московское +3
     # Следовательно, из желаемого времени нужно вычесть 3
-    aioschedule.every().day.at("18:17").do(evening_ayah_set)
+    aioschedule.every().day.at("18:25").do(evening_ayah_set)
     aioschedule.every().day.at("3:00").do(morning_motivation)
     aioschedule.every().day.at("19:00").do(reports_checker)
     aioschedule.every().day.at("21:00").do(reports_checker, clean=True)
