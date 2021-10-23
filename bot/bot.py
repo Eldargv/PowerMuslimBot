@@ -171,7 +171,7 @@ async def motivation_words(message: types.Message):
     if 12 <= datetime.now().hour <= 20:
         cursor = conn.cursor()
         user_id = message.from_user.id
-        chat_id = message.from_user.id
+        chat_id = message.chat.id
         cursor.execute(f"UPDATE Users SET reports = true WHERE user_id = {user_id} AND chat_id = {chat_id}")
         cursor.close()
         if random.randint(0, 1) == 0:
