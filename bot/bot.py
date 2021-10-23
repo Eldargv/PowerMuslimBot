@@ -22,9 +22,15 @@ from datetime import datetime
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
+
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 conn.autocommit = True
-Quran = json
+
+Quran = {}
+ayah_nums = {}
+
+keyboard = types.InlineKeyboardMarkup()
+
 motivation = ["Чё творит вообще", "Мощь", "Гений", "Молодец", "Отлично", "Шикарный день", "Принято", "МАШОЛЛО", "Победитель по жизни", "Финансовый гений", "Мастер своего дела", "Акула"]
 stickers = [
     'CAACAgIAAxkBAAEDIAdhcaOCtoVYU-LuZ73VCJsFY-eMyQACeBQAAhDEYEsdr5puuyESPCEE',
@@ -34,6 +40,32 @@ sticker_demotivation = [
     'CAACAgIAAxkBAAEDIBFhcaTD0FFMFre074ZesVLQERuSEQACmw8AAsjPUEvYEF3ycvz7vyEE',
     'CAACAgIAAxkBAAEDIAthcaPOKzORs6eyNBpjEIHkH0RFLgACKREAAo4bYEsDJz2fSmNFNiEE'
 ]
+
+
+def create_keyboard(prev="", next=""):
+    buttons = []
+    if len(prev) > 0:
+        buttons.append(types.InlineKeyboardButton(text=prev, callback_data=('ayah_' + prev)))
+    if len(next) > 0:
+        buttons.append(types.InlineKeyboardButton(text=next, callback_data=('ayah_' + next)))
+    global keyboard
+    if len(buttons) > 0:
+        keyboard = types.InlineKeyboardMarkup(row_width=len(buttons))
+        keyboard.add(*buttons)
+        print("Keyboard created")
+
+
+@dp.callback_query_handler(filters.Text(startswith='ayah_'))
+async def get_adjacent_ayahs(call: types.CallbackQuery):
+    # ayah_2:6, 7
+    ayah = call.data.split('_')[-1].split(':')
+    msg = get_ayah_by_num([ayah[0], re.split(', |-|,', ayah[-1])[-1]])
+    print(ayah[0] + ' ' + re.split(', |-|,', ayah[-1])[-1])
+    if not msg[1]:
+        await call.message.answer(msg[0])
+    else:
+        await call.message.answer(msg[0], reply_markup=keyboard)
+    await call.answer()
 
 
 def correct(msg):
@@ -54,22 +86,31 @@ def correct(msg):
 
 def get_ayah_by_num(surah_ayah):
     if len(surah_ayah) != 2:
-        return "Неправильный формат. Вы можете ввести номер суры и аята через пробел, запятую и двоеточие"
+        return "Неправильный формат. Вы можете ввести номер суры и аята через пробел, запятую и двоеточие", False
     surah, ayah = surah_ayah
     if not surah.isdigit() or not ayah.isdigit():
-        return "Вы ввели не число"
+        return "Вы ввели не число", False
     print("nums got", surah, ayah)
     if 0 < int(surah) < 115:
-        verses = Quran[surah].items()
         print("trying get ayah")
-        for n, t in verses:
-            nums = list(map(int, re.split('[-:,]', n)))
-            if nums[1] <= int(ayah) <= nums[-1]:
-                print("Find!")
-                return correct(n + t)
-        return "Неверный номер аята"
+        if 0 < int(ayah) < len(ayah_nums[surah]) + 1:
+            next = ""
+            prev = ""
+            now = ayah_nums[surah][ayah]
+            print(f"AAAAAAAA {now}")
+            prev_num = int(re.split('[:|, |-]', now)[1])
+            next_num = int(re.split('[:|, |-]', now)[-1])
+            if prev_num > 1:
+                prev = ayah_nums[surah][str(prev_num - 1)]
+                print("prev ayah got")
+            if next_num < len(ayah_nums[surah]):
+                next = ayah_nums[surah][str(next_num + 1)]
+                print("next ayah got")
+            create_keyboard(prev, next)
+            return (correct(now + Quran[now]), not (next == "" and prev == ""))
+        return "Неверный номер аята", False
     else:
-        return "Неверный номер суры"
+        return "Неверный номер суры", False
 
 
 @dp.message_handler(commands="start")
@@ -80,15 +121,29 @@ async def start(message: types.Message):
 
 @dp.message_handler(commands="random")
 async def get_random_verse(message: types.Message):
-    num = random.randint(1, 114)
-    rnum, rtext = random.choice(list(Quran[str(num)].items()))
-    await message.answer(correct(rnum + rtext))
+    rnum = random.choice(list(Quran))
+    surah_ayah_parse = re.split('[:| ,|-|]', rnum)
+    msg = get_ayah_by_num([surah_ayah_parse[0], surah_ayah_parse[-1]])
+    if msg[1]:
+        await message.answer(msg[0], reply_markup=keyboard)
+    else:
+        await message.answer(msg[0])
 
 
 @dp.message_handler(chat_type=types.ChatType.PRIVATE)
 async def get_specific_verse(message: types.Message):
-    surah_ayah = re.split(', | |:|,', message.text)
-    await message.answer(get_ayah_by_num(surah_ayah))
+    if message.reply_to_message and message.reply_to_message.from_user.id == bot.id:
+        pack = await bot.get_sticker_set('Power_Muslims')
+        # print(pack.stickers)
+        await message.reply_sticker(random.choice(pack.stickers).file_id)
+    else:
+        surah_ayah = re.split(', | |:|,', message.text)
+        msg = get_ayah_by_num(surah_ayah)
+        if msg[1]:
+            print("try to attack keyboard")
+            await message.answer(msg[0], reply_markup=keyboard)
+        else:
+            await message.answer(msg[0])
 
 
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
@@ -241,6 +296,15 @@ async def on_startup(dp):
     logging.warning(
         'Starting connection. '
     )
+    
+    with open("Quran.json", encoding='utf-8') as file:
+        global Quran
+        Quran = json.load(file)
+
+    with open("ayah_nums.json", encoding='utf-8') as file:
+        global ayah_nums
+        ayah_nums = json.load(file)
+    
     asyncio.create_task(scheduler())
     await set_default_commands()
     await bot.set_webhook(WEBHOOK_URL,drop_pending_updates=True)
@@ -251,10 +315,6 @@ async def on_shutdown(dp):
 
 
 def main():
-    with open("Quran.json", encoding='utf-8') as file:
-        global Quran
-        Quran = json.load(file)
-
     logging.basicConfig(level=logging.INFO)
     start_webhook(
         dispatcher=dp,
