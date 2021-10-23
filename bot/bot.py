@@ -144,9 +144,13 @@ async def get_specific_verse(message: types.Message):
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
 async def get_specific_verse(message: types.Message):
     ftext = message.text.replace('@PowerMuslimBot ', '')
-    print(ftext)
     surah_ayah = re.split(', | |:|,', ftext)
-    await message.answer(get_ayah_by_num(surah_ayah))
+    msg = get_ayah_by_num(surah_ayah)
+    if msg[1]:
+        print("try to attack keyboard")
+        await message.answer(msg[0], reply_markup=keyboard)
+    else:
+        await message.answer(msg[0])
 
 
 @dp.message_handler(commands="register", chat_type=('group', 'supergroup'))
