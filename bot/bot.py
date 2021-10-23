@@ -62,9 +62,15 @@ async def get_adjacent_ayahs(call: types.CallbackQuery):
     msg = get_ayah_by_num([ayah[0], re.split(', |-|,', ayah[-1])[-1]])
     print(ayah[0] + ' ' + re.split(', |-|,', ayah[-1])[-1])
     if not msg[1]:
-        await call.message.answer(msg[0])
+        if call.message.chat.id < 0:
+            await call.message.reply(msg[0])
+        else:
+            await call.message.answer(msg[0])
     else:
-        await call.message.answer(msg[0], reply_markup=keyboard)
+        if call.message.chat.id < 0:
+            await call.message.reply(msg[0], reply_markup=keyboard)
+        else:
+            await call.message.answer(msg[0], reply_markup=keyboard)
     await call.answer()
 
 
