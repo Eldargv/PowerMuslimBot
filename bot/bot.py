@@ -132,18 +132,13 @@ async def get_random_verse(message: types.Message):
 
 @dp.message_handler(chat_type=types.ChatType.PRIVATE)
 async def get_specific_verse(message: types.Message):
-    if message.reply_to_message and message.reply_to_message.from_user.id == bot.id:
-        pack = await bot.get_sticker_set('Power_Muslims')
-        # print(pack.stickers)
-        await message.reply_sticker(random.choice(pack.stickers).file_id)
+    surah_ayah = re.split(', | |:|,', message.text)
+    msg = get_ayah_by_num(surah_ayah)
+    if msg[1]:
+        print("try to attack keyboard")
+        await message.answer(msg[0], reply_markup=keyboard)
     else:
-        surah_ayah = re.split(', | |:|,', message.text)
-        msg = get_ayah_by_num(surah_ayah)
-        if msg[1]:
-            print("try to attack keyboard")
-            await message.answer(msg[0], reply_markup=keyboard)
-        else:
-            await message.answer(msg[0])
+        await message.answer(msg[0])
 
 
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
@@ -179,6 +174,13 @@ async def motivation_words(message: types.Message):
             await message.reply(random.choice(motivation) + ' ' + message.from_user.first_name + '!')
         else:
             await message.reply_sticker(random.choice(stickers))
+
+
+@dp.message_handler(content_types=ContentType.ANY, chat_type=('group', 'supergroup'))
+async def funny_message_to_reply(message: types.Message):
+    if message.reply_to_message and message.reply_to_message.from_user.id == bot.id:
+        pack = await bot.get_sticker_set('Power_Muslims')
+        await message.reply_sticker(random.choice(pack.stickers).file_id)
 
 
 @dp.my_chat_member_handler(chat_type=('group', 'supergroup'))
