@@ -213,7 +213,7 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
         cursor.close()
 
 
-async def time_send():
+async def evening_ayah_set():
     print("trying to send message")
     cursor = conn.cursor()
     cursor.execute('SELECT chat_id FROM Chats')
@@ -222,9 +222,13 @@ async def time_send():
     for id in chat_list:
         await bot.send_message(id, "Cегодняшняя подборка:")
         for i in range(3):
-            num = random.randint(1, 114)
-            rnum, rtext = random.choice(list(Quran[str(num)].items()))
-            await bot.send_message(id, correct(rnum + rtext))
+            rnum = random.choice(list(Quran))
+            surah_ayah_parse = re.split('[:| ,|-|]', rnum)
+            msg = get_ayah_by_num([surah_ayah_parse[0], surah_ayah_parse[-1]])
+            if msg[1]:
+                await bot.send_message(chat_id=id, text=msg[0], reply_markup=keyboard)
+            else:
+                await bot.send_message(chat_id=id, text=msg[0])
 
 
 async def morning_motivation():
@@ -275,7 +279,7 @@ async def scheduler():
     # Время на сервере UTC+0
     # Московское +3
     # Следовательно, из желаемого времени нужно вычесть 3
-    aioschedule.every().day.at("18:00").do(time_send)
+    aioschedule.every().day.at("18:17").do(evening_ayah_set)
     aioschedule.every().day.at("3:00").do(morning_motivation)
     aioschedule.every().day.at("19:00").do(reports_checker)
     aioschedule.every().day.at("21:00").do(reports_checker, clean=True)
