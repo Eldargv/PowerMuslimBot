@@ -198,7 +198,9 @@ async def chat_member_handler(update: types.ChatMemberUpdated):
     stat = update.new_chat_member.is_chat_member()
     if (stat):
         cursor = conn.cursor()
-        cursor.execute(f'INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING')
+        cursor.execute('SELECT * FROM Chats')
+        cnt = len(cursor.fetchall())
+        cursor.execute(f'INSERT INTO Chats (chat_id, worksheet) VALUES ({chat_id}, {cnt}) ON CONFLICT DO NOTHING')
         cursor.close()
         await update.bot.send_message(chat_id, text=
                                                 "Ас-саляму алейкум! Я буду менеджить ваши ежедневные отчеты!"
