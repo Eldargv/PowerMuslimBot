@@ -5,12 +5,13 @@ import re
 import asyncio
 import aioschedule
 import psycopg2
+import gspread
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types.message import ContentType
 from aiogram.types.bot_command import BotCommand
-from aiogram.types.bot_command_scope import BotCommandScopeAllGroupChats, BotCommandScopeAllPrivateChats
+from aiogram.types.bot_command_scope import BotCommandScopeAllGroupChats
 from aiogram.utils.executor import start_webhook
 from aiogram.dispatcher import filters
 from bot.config import (BOT_TOKEN, HEROKU_APP_NAME,
@@ -26,6 +27,9 @@ dp.middleware.setup(LoggingMiddleware())
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 conn.autocommit = True
 
+gc = gspread.service_account(filename="token.json")
+sh = gc.open("Power Muslims Reports")
+
 Quran = {}
 ayah_nums = {}
 
@@ -40,6 +44,45 @@ sticker_demotivation = [
     'CAACAgIAAxkBAAEDIBFhcaTD0FFMFre074ZesVLQERuSEQACmw8AAsjPUEvYEF3ycvz7vyEE',
     'CAACAgIAAxkBAAEDIAthcaPOKzORs6eyNBpjEIHkH0RFLgACKREAAo4bYEsDJz2fSmNFNiEE'
 ]
+
+
+def create_checkboxes(col):
+    requests = {"requests": [
+        {
+            'repeatCell': {
+                'cell': {'dataValidation': {'condition': {'type': 'BOOLEAN'}}},
+                'range': {'sheetId': 0, 'startRowIndex': 1, 'endRowIndex': 50,
+                            'startColumnIndex': col - 1,
+                            'endColumnIndex': col},
+                'fields': 'dataValidation'
+            }
+        }
+    ]}
+    sh.batch_update(requests)
+
+
+def update_report_sync(worksheet_id, user_name, user_id, chat_id, flag = 0):
+    worksheet = sh.get_worksheet(worksheet_id)
+    cell = worksheet.find(str(user_id))
+    col = 0
+    if cell == None:
+        print(worksheet.row_values(100))
+        user_cnt = len(worksheet.row_values(100)) + 1
+        worksheet.update_cell(100, user_cnt, user_id)
+        worksheet.update_cell(101, user_cnt, chat_id)
+        worksheet.update_cell(1, user_cnt, user_name)
+        create_checkboxes(user_cnt)
+        col = user_cnt
+    else:
+        col = cell.col
+    date = datetime.today().date()
+    row = worksheet.find(f'{date.day - flag}.{date.month}.{date.year}').row
+    worksheet.update_cell(row, col, True)
+
+
+async def update_report(worksheet_id, user_name, user_id, chat_id, flag = 0):
+    await asyncio.get_event_loop().run_in_executor(None, update_report_sync, worksheet_id, user_name, user_id, chat_id, flag)
+    print("OK, I updated cells")
 
 
 def create_keyboard(prev="", next=""):
@@ -147,6 +190,28 @@ async def get_specific_verse(message: types.Message):
         await message.answer(msg[0])
 
 
+@dp.my_chat_member_handler(chat_type=('group', 'supergroup'))
+async def chat_member_handler(update: types.ChatMemberUpdated):
+    print("New chat update")
+    chat_id = update.chat.id
+    print(chat_id)
+    stat = update.new_chat_member.is_chat_member()
+    if (stat):
+        cursor = conn.cursor()
+        cursor.execute(f'INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING')
+        cursor.close()
+        await update.bot.send_message(chat_id, text=
+                                                "Ас-саляму алейкум! Я буду менеджить ваши ежедневные отчеты!"
+                                                "\nОтчеты принимаются с 15:00 до 00:00 по мск за текущий день. А досылать их можно с 00:00 до 15:00 - они учтутся за прошедший день."
+                                                " Таблица с отчетами доступна по [ссылке](https://docs.google.com/spreadsheets/d/1A7Vy3UATSCjBKENvPPfOaeDbq5mmF7l640M-XysGbj0/edit?usp=sharing)."
+                                                " Вы в нее попадете с первым вашим отчетом."
+                                                "\n\nТакже я каждый день в 21:00 буду присылать подборку из трех случайно выбранных аятов."
+                                                " Чтобы вручную сгенерировать случайный аят, напишите /random."
+                                                " Чтобы получить конкретный аят, тегните меня @PowerMuslimBot с сообщением номера суры и аята через пробел, "
+                                                "запятую или двоеточие. Всем удачи!",
+                                            parse_mode='Markdown')
+
+
 @dp.message_handler(filters.Text(startswith='@PowerMuslimBot'))
 async def get_specific_verse(message: types.Message):
     ftext = message.text.replace('@PowerMuslimBot ', '')
@@ -159,31 +224,21 @@ async def get_specific_verse(message: types.Message):
         await message.answer(msg[0])
 
 
-@dp.message_handler(commands="register", chat_type=('group', 'supergroup'))
-async def register(message: types.Message):
-    user_id = message.from_user.id
-    user_name = message.from_user.first_name
-    chat_id = message.chat.id
-    cursor = conn.cursor()
-    cursor.execute(f"INSERT INTO Users (user_id, user_name, chat_id, reports) VALUES ('{user_id}', '{user_name}', {chat_id}, false) ON CONFLICT DO NOTHING")
-    cursor.execute(f"INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING")
-    cursor.close()
-    await message.answer(f"Игрок №{user_id} зарегистрирован!")
-
-
 @dp.message_handler(content_types=ContentType.ANY, hashtags='отчетзадень')
 async def motivation_words(message: types.Message):
     # UTC+3: 15 23
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    user_name = message.from_user.first_name
+    cursor = conn.cursor()
+    cursor.execute(f'SELECT worksheet FROM CHATS WHERE chat_id = {chat_id}')
+    worksheet_id = cursor.fetchone()[0]
+    cursor.close()
+    await message.reply('Молодец ' + message.from_user.first_name + '!')
+    flag = 0
     if 12 <= datetime.now().hour <= 20:
-        cursor = conn.cursor()
-        user_id = message.from_user.id
-        chat_id = message.chat.id
-        cursor.execute(f"UPDATE Users SET reports = true WHERE user_id = {user_id} AND chat_id = {chat_id}")
-        cursor.close()
-        if random.randint(0, 1) == 0:
-            await message.reply(random.choice(motivation) + ' ' + message.from_user.first_name + '!')
-        else:
-            await message.reply_sticker(random.choice(stickers))
+        flag = 1
+    await update_report(worksheet_id, user_name, user_id, chat_id, flag)
 
 
 @dp.message_handler(content_types=ContentType.ANY, chat_type=('group', 'supergroup'))
@@ -191,32 +246,6 @@ async def funny_message_to_reply(message: types.Message):
     if message.reply_to_message and message.reply_to_message.from_user.id == bot.id:
         pack = await bot.get_sticker_set('Power_Muslims')
         await message.reply_sticker(random.choice(pack.stickers).file_id)
-
-
-@dp.my_chat_member_handler(chat_type=('group', 'supergroup'))
-async def chat_member_handler(update: types.ChatMemberUpdated):
-    print("New chat update")
-    chat_id = update.chat.id
-    print(chat_id)
-    stat = update.new_chat_member.is_chat_member()
-    if (stat):
-        cursor = conn.cursor()
-        cursor.execute(f'INSERT INTO Chats VALUES ({chat_id}) ON CONFLICT DO NOTHING')
-        cursor.close()
-        await update.bot.send_message(chat_id,
-                                                "Ас-саляму алейкум! Я буду менеджить ваши ежедневные отчеты! "
-                                                "\nОтчеты принимаются с 15:00 до 00:00 по мск. В 22:00 я тегну всех, кто не сдал отчеты к этому времени."
-                                                " Чтобы зарегистрироваться, отправьте /register."
-                                                "\n\nТакже я каждый день в 21:00 буду присылать подборку из трех случайно выбранных аятов."
-                                                " Чтобы вручную сгенерировать случайный аят, напишите /random."
-                                                " Чтобы получить конкретный аят, тегните меня @PowerMuslimBot с сообщением номера суры и аята через пробел, "
-                                                "запятую или двоеточие. Всем удачи!"
-                                                )
-    else:
-        cursor = conn.cursor()
-        cursor.execute(f"DELETE FROM Chats WHERE chat_id = {chat_id}")
-        cursor.execute(f"DELETE FROM Users WHERE chat_id = {chat_id}")
-        cursor.close()
 
 
 async def evening_ayah_set():
@@ -247,48 +276,13 @@ async def morning_motivation():
         await bot.send_message(id, "Ну что, ребята, топим педаль газа в пол! Идем к божественным подаркам в новом дне!")
 
 
-async def reports_checker(clean=False):
-    cursor = conn.cursor()
-    # Забираем из таблицы все id чатов-групп
-    cursor.execute('SELECT chat_id FROM Chats')
-    # Строим массив
-    chat_list = [int(chat_id[0]) for chat_id in cursor.fetchall()]
-    # Забираем из второй таблицы юзеров
-    cursor.execute('SELECT user_id, user_name, chat_id FROM Users WHERE reports = false')
-    # Кладем в массив
-    users = cursor.fetchall()
-    # Начинаме собирать сообщения с индексами юзеров
-    messages = {}
-    # Строго задаем словарь
-    for chat_id in chat_list:
-        messages[chat_id] = ""
-    # Собираем сообщения с id юзеров
-    for user_id, user_name, chat_id in users:
-        messages[int(chat_id)] += f"[{user_name}](tg://user?id={user_id}), "
-    # Собираем для каждого чата сообщение с теми, кто не прислал отчет
-    for chat_id, message in messages.items():
-        if len(message) == 0:
-            await bot.send_message(int(chat_id), "Молодцы, ребята! Сегодня все прислали отчеты!")
-        else:
-            if clean:
-                await bot.send_message(int(chat_id), "Так и не дождался отчётов от " + message[:-2] + " (((", parse_mode='Markdown')
-            else:
-                await bot.send_message(int(chat_id), "Не понял, а где отчеты от " + message[:-2] + " ...", parse_mode='Markdown')
-            await bot.send_sticker(int(chat_id), random.choice(sticker_demotivation))
-        if clean:
-            cursor.execute(f'UPDATE Users SET reports = false WHERE chat_id = {int(chat_id)}')
-    cursor.close()
-
-
 async def scheduler():
     print("Activating scheduler")
     # Время на сервере UTC+0
     # Московское +3
     # Следовательно, из желаемого времени нужно вычесть 3
-    aioschedule.every().day.at("18:25").do(evening_ayah_set)
+    aioschedule.every().day.at("18:00").do(evening_ayah_set)
     aioschedule.every().day.at("3:00").do(morning_motivation)
-    aioschedule.every().day.at("19:00").do(reports_checker)
-    aioschedule.every().day.at("21:00").do(reports_checker, clean=True)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
@@ -303,7 +297,6 @@ async def set_default_commands():
 
     group_commands = [
         BotCommand(command="random", description="Случайный аят"),
-        BotCommand(command="register", description="Зарегистрироваться в игру"),
     ]
     await dp.bot.set_my_commands(group_commands, BotCommandScopeAllGroupChats())
 
@@ -322,7 +315,9 @@ async def on_startup(dp):
         ayah_nums = json.load(file)
     
     asyncio.create_task(scheduler())
+
     await set_default_commands()
+
     await bot.set_webhook(WEBHOOK_URL,drop_pending_updates=True)
 
 
