@@ -238,7 +238,7 @@ async def motivation_words(message: types.Message):
     cursor.close()
     await message.reply('Молодец ' + message.from_user.first_name + '!')
     flag = 0
-    if 12 <= datetime.now().hour <= 20:
+    if 21 <= datetime.now().hour or datetime.now().hour <= 12:
         flag = 1
     await update_report(worksheet_id, user_name, user_id, chat_id, flag)
 
