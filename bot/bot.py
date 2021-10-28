@@ -35,30 +35,6 @@ ayah_nums = {}
 
 keyboard = types.InlineKeyboardMarkup()
 
-motivation = [
-        "Чё творит вообще",
-        "Мощь",
-        "Гений",
-        "Молодец",
-        "Отлично",
-        "Шикарный день",
-        "Принято",
-        "МАШОЛЛО",
-        "Победитель по жизни",
-        "Финансовый гений",
-        "Мастер своего дела",
-        "Акула"
-]
-stickers = [
-    'CAACAgIAAxkBAAEDIAdhcaOCtoVYU-LuZ73VCJsFY-eMyQACeBQAAhDEYEsdr5puuyESPCEE',
-    'CAACAgIAAxkBAAEDIA9hcaQdKET0Z9gbNU0TrbPJ7E2vfgACKREAAmosWEtNPXH3WL3P7CEE'
-]
-sticker_demotivation = [
-    'CAACAgIAAxkBAAEDIBFhcaTD0FFMFre074ZesVLQERuSEQACmw8AAsjPUEvYEF3ycvz7vyEE',
-    'CAACAgIAAxkBAAEDIAthcaPOKzORs6eyNBpjEIHkH0RFLgACKREAAo4bYEsDJz2fSmNFNiEE'
-]
-
-
 def create_checkboxes(col, sheet_id):
     requests = {"requests": [
         {
