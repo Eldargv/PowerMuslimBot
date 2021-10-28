@@ -222,10 +222,16 @@ async def motivation_words(message: types.Message):
     chat_id = message.chat.id
     user_name = message.from_user.first_name
     cursor = conn.cursor()
+
     cursor.execute(f'SELECT worksheet FROM CHATS WHERE chat_id = {chat_id}')
     worksheet_id = cursor.fetchone()[0]
+
+    cursor.execute('select text from motivation_text')
+    moti = [str(a[0]) for a in cursor.fetchall()]
+
     cursor.close()
-    await message.reply('Молодец ' + message.from_user.first_name + '!')
+
+    await message.reply(random.choice(moti).replace('*имя*', user_name))
     flag = 0
     if 21 <= datetime.now().hour or datetime.now().hour <= 12:
         flag = 1
