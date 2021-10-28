@@ -35,7 +35,20 @@ ayah_nums = {}
 
 keyboard = types.InlineKeyboardMarkup()
 
-motivation = ["Чё творит вообще", "Мощь", "Гений", "Молодец", "Отлично", "Шикарный день", "Принято", "МАШОЛЛО", "Победитель по жизни", "Финансовый гений", "Мастер своего дела", "Акула"]
+motivation = [
+        "Чё творит вообще",
+        "Мощь",
+        "Гений",
+        "Молодец",
+        "Отлично",
+        "Шикарный день",
+        "Принято",
+        "МАШОЛЛО",
+        "Победитель по жизни",
+        "Финансовый гений",
+        "Мастер своего дела",
+        "Акула"
+]
 stickers = [
     'CAACAgIAAxkBAAEDIAdhcaOCtoVYU-LuZ73VCJsFY-eMyQACeBQAAhDEYEsdr5puuyESPCEE',
     'CAACAgIAAxkBAAEDIA9hcaQdKET0Z9gbNU0TrbPJ7E2vfgACKREAAmosWEtNPXH3WL3P7CEE'
@@ -46,12 +59,12 @@ sticker_demotivation = [
 ]
 
 
-def create_checkboxes(col):
+def create_checkboxes(col, sheet_id):
     requests = {"requests": [
         {
             'repeatCell': {
                 'cell': {'dataValidation': {'condition': {'type': 'BOOLEAN'}}},
-                'range': {'sheetId': 0, 'startRowIndex': 1, 'endRowIndex': 50,
+                'range': {'sheetId': sheet_id, 'startRowIndex': 1, 'endRowIndex': 50,
                             'startColumnIndex': col - 1,
                             'endColumnIndex': col},
                 'fields': 'dataValidation'
@@ -71,7 +84,7 @@ def update_report_sync(worksheet_id, user_name, user_id, chat_id, flag = 0):
         worksheet.update_cell(100, user_cnt, user_id)
         worksheet.update_cell(101, user_cnt, chat_id)
         worksheet.update_cell(1, user_cnt, user_name)
-        create_checkboxes(user_cnt)
+        create_checkboxes(user_cnt, worksheet.id)
         col = user_cnt
     else:
         col = cell.col
