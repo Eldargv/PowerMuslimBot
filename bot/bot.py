@@ -17,6 +17,7 @@ from aiogram.dispatcher import filters
 from bot.config import (BOT_TOKEN, WEBHOOK_URL, WEBHOOK_PATH,
                         WEBAPP_HOST, WEBAPP_PORT, DATABASE_URL)
 from datetime import datetime, timezone, timedelta
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 bot = Bot(token=BOT_TOKEN)
@@ -33,6 +34,8 @@ Quran = {}
 ayah_nums = {}
 
 keyboard = types.InlineKeyboardMarkup()
+
+scheduler = AsyncIOScheduler()
 
 def create_checkboxes(col, sheet_id):
     requests = {"requests": [
@@ -95,15 +98,17 @@ async def get_adjacent_ayahs(call: types.CallbackQuery):
     print(ayah[0] + ' ' + re.split(', |-|,', ayah[-1])[-1])
     if not msg[1]:
         if call.message.chat.id < 0:
-            await call.message.reply(msg[0])
+            s_msg = await call.message.reply(msg[0])
         else:
             await call.message.answer(msg[0])
     else:
         if call.message.chat.id < 0:
-            await call.message.reply(msg[0], reply_markup=keyboard)
+            s_msg = await call.message.reply(msg[0], reply_markup=keyboard)
         else:
             await call.message.answer(msg[0], reply_markup=keyboard)
     await call.answer()
+    if call.message.chat.id < 0:
+        scheduler.add_job(s_msg.delete, "date", run_date=(datetime.now() + timedelta(minutes=3)))
 
 
 def correct(msg):
@@ -317,6 +322,8 @@ async def on_startup(dp):
     asyncio.create_task(scheduler())
 
     await set_default_commands()
+
+    scheduler.start()
 
     await bot.set_webhook(WEBHOOK_URL,drop_pending_updates=True)
 
