@@ -14,10 +14,9 @@ from aiogram.types.bot_command import BotCommand
 from aiogram.types.bot_command_scope import BotCommandScopeAllGroupChats
 from aiogram.utils.executor import start_webhook
 from aiogram.dispatcher import filters
-from bot.config import (BOT_TOKEN, HEROKU_APP_NAME,
-                          WEBHOOK_URL, WEBHOOK_PATH,
-                          WEBAPP_HOST, WEBAPP_PORT, DATABASE_URL)
-from datetime import datetime
+from bot.config import (BOT_TOKEN, WEBHOOK_URL, WEBHOOK_PATH,
+                        WEBAPP_HOST, WEBAPP_PORT, DATABASE_URL)
+from datetime import datetime, timezone, timedelta
 
 
 bot = Bot(token=BOT_TOKEN)
@@ -64,8 +63,9 @@ def update_report_sync(worksheet_id, user_name, user_id, chat_id, flag = 0):
         col = user_cnt
     else:
         col = cell.col
-    date = datetime.today().date()
-    row = worksheet.find(f'{date.day - flag}.{date.month}.{date.year}').row
+    tz = timezone(timedelta(hours=+3.0))
+    date = datetime.now(tz) + timedelta(days=-flag)
+    row = worksheet.find(f'{date.day}.{date.month}.{date.year}').row
     worksheet.update_cell(row, col, True)
 
 
@@ -233,7 +233,7 @@ async def motivation_words(message: types.Message):
 
     await message.reply(random.choice(moti).replace('*имя*', user_name))
     flag = 0
-    if 21 <= datetime.now().hour or datetime.now().hour <= 12:
+    if 21 <= datetime.now().hour or datetime.now().hour <= 11:
         flag = 1
     await update_report(worksheet_id, user_name, user_id, chat_id, flag)
 
