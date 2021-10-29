@@ -35,7 +35,7 @@ ayah_nums = {}
 
 keyboard = types.InlineKeyboardMarkup()
 
-scheduler = AsyncIOScheduler()
+async_scheduler = AsyncIOScheduler()
 
 def create_checkboxes(col, sheet_id):
     requests = {"requests": [
@@ -108,7 +108,7 @@ async def get_adjacent_ayahs(call: types.CallbackQuery):
             await call.message.answer(msg[0], reply_markup=keyboard)
     await call.answer()
     if call.message.chat.id < 0:
-        scheduler.add_job(s_msg.delete, "date", run_date=(datetime.now() + timedelta(minutes=3)))
+        async_scheduler.add_job(s_msg.delete, "date", run_date=(datetime.now() + timedelta(minutes=3)))
 
 
 def correct(msg):
@@ -323,7 +323,7 @@ async def on_startup(dp):
 
     await set_default_commands()
 
-    scheduler.start()
+    async_scheduler.start()
 
     await bot.set_webhook(WEBHOOK_URL,drop_pending_updates=True)
 
