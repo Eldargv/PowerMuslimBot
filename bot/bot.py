@@ -108,7 +108,10 @@ async def get_adjacent_ayahs(call: types.CallbackQuery):
             await call.message.answer(msg[0], reply_markup=keyboard)
     await call.answer()
     if call.message.chat.id < 0:
-        async_scheduler.add_job(s_msg.delete, "date", run_date=(datetime.now() + timedelta(minutes=3)))
+        try:
+            async_scheduler.add_job(s_msg.delete, "date", run_date=(datetime.now() + timedelta(minutes=3)))
+        except:
+            print("IDK BUT THERE IS SOME EXCEPTION")
 
 
 def correct(msg):
