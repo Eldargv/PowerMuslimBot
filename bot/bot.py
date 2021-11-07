@@ -168,7 +168,7 @@ async def start(message: types.Message):
 @dp.message_handler(commands="random")
 async def get_random_verse(message: types.Message):
     rnum = random.choice(list(Quran))
-    surah_ayah_parse = re.split('[:| ,|-|]', rnum)
+    surah_ayah_parse = re.split('[:|, |-|]', rnum)
     msg = get_ayah_by_num([surah_ayah_parse[0], surah_ayah_parse[-1]])
     if msg[1]:
         await message.answer(msg[0], reply_markup=keyboard)
@@ -226,7 +226,7 @@ async def get_specific_verse(message: types.Message):
         await message.answer(msg[0])
 
 
-@dp.message_handler(content_types=ContentType.ANY, hashtags='отчетзадень')
+@dp.message_handler(content_types=ContentType.ANY, hashtags=['отчетзадень', 'отчётзадень'])
 async def motivation_words(message: types.Message):
     # UTC+3: 15 23
     user_id = message.from_user.id
@@ -266,7 +266,7 @@ async def evening_ayah_set():
         await bot.send_message(id, "Cегодняшняя подборка:")
         for i in range(3):
             rnum = random.choice(list(Quran))
-            surah_ayah_parse = re.split('[:| ,|-|]', rnum)
+            surah_ayah_parse = re.split('[:|, |-|]', rnum)
             msg = get_ayah_by_num([surah_ayah_parse[0], surah_ayah_parse[-1]])
             if msg[1]:
                 await bot.send_message(chat_id=id, text=msg[0], reply_markup=keyboard)
