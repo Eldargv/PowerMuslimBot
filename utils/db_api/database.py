@@ -46,3 +46,11 @@ def get_motivation(user_name):
     motivation_list = [str(a[0]) for a in cursor.fetchall()]
     cursor.close()
     return random_choice(motivation_list).replace('*имя*', user_name)
+
+
+def get_chats():
+    cursor = conn.cursor()
+    cursor.execute('select chat_id from chats')
+    chat_list = [int(chat_id[0]) for chat_id in cursor.fetchall()]
+    cursor.close()
+    return chat_list
